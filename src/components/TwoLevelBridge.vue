@@ -117,10 +117,10 @@
             switchPositions: Array
         },
         data: function() { 
-                return {
-                    switches: [0, 0, 0, 0, 0, 0],
-                };
-            },
+            return {
+                switches: [0, 0, 0, 0, 0, 0]
+            };
+        },
         mounted() { 
             this.S1 = document.getElementById("switch_S1");
             this.S2 = document.getElementById("switch_S2");

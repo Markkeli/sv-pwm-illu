@@ -1,7 +1,8 @@
 <template>
         <div id="app">
-           <SvmCoordinates v-on:triggerModulation="modulate" />
-           <TwoLevelBridge v-bind:switchPositions="positions" />
+            <SvmCoordinates v-on:triggerModulation="modulate" />
+            <TwoLevelBridge v-bind:switchPositions="positions" />
+            <Waveform v-bind:newSignal="signal" id="wf" />
 
         </div>
 </template>
@@ -10,16 +11,26 @@
 
 import SvmCoordinates from './components/SvmCoordinates.vue'
 import TwoLevelBridge from './components/TwoLevelBridge.vue'
+import Waveform from './components/Waveform.vue'
 
 export default {
   name: 'App',
   components: {
     SvmCoordinates,
-    TwoLevelBridge
+    TwoLevelBridge,
+    Waveform
   },
   data() { 
     return {
-      positions:[0,0,0,0,0,0]
+      positions: [0,0,0,0,0,0],
+      signal: [[], [], []]
+    }
+  },
+  mounted() {
+    for (var i = 0; i < 100; ++i) {
+            this.signal[0][i] = 0;
+            this.signal[1][i] = 0;
+            this.signal[2][i] = 0;        
     }
   },
   methods: {
@@ -28,6 +39,8 @@ export default {
         // Switch vectors
         // Order: S1, S2, S3, S4, S5, S6
         // where switches 1-2 are part of A-phase leg etc.
+        var Udc = 80;
+
         var v0 = [1,0,1,0,1,0];
         var v1 = [0,1,1,0,1,0];
         var v2 = [0,1,0,1,1,0];
@@ -36,7 +49,6 @@ export default {
         var v5 = [1,0,1,0,0,1];
         var v6 = [0,1,1,0,0,1];
         var v7 = [0,1,0,1,0,1];
-
 
         var v_alpha = voltageReference[0];
         var v_beta = voltageReference[1];
@@ -51,8 +63,13 @@ export default {
         var t_seventh = 0;        
         var one_by_sqrt3 = 1/Math.sqrt(3);
         var two_by_sqrt3 = 2/Math.sqrt(3);
-        var fullPeriod = 500; // ms
+        var fullPeriod = 2000; // ms
         var halfPeriod = 0.5 * fullPeriod;
+        
+        // Signal data init
+        for (var i = 0; i < 100; ++i) {
+            this.signal[i] = 0;
+        }
 
         // Switch timings
         switch (sector) {
@@ -169,7 +186,6 @@ export default {
                 t_sixth = t_fifth + t1;
                 t_seventh = t_sixth + t2;             
 
-
                 break;
             }
         }
@@ -224,215 +240,184 @@ export default {
         else if (t_seventh > fullPeriod) {
             t_seventh = fullPeriod;
         }        
-                
-    
-        // Switch sequence
+        
+        // Define the switch and voltage sequences for each sector
+        var switchSequence = [];
+        var voltageSequence_ab = [];
+        var voltageSequence_bc = [];
+        var voltageSequence_ca = [];
+
 
         switch (sector) {
             case 1: {
-
-                this.positions = v0;
-
-                setTimeout(() => {
-                    this.positions = v1;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v2;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v2;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v1;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);  
-
+                switchSequence = [v0, v1, v2, v7, v7, v2, v1, v0];
                 break;
             }
             case 2: {
-
-                this.positions = v0;
-
-                setTimeout(() => {
-                    this.positions = v3;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v2;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v2;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v3;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);  
-                
+                switchSequence = [v0, v3, v2, v7, v7, v2, v3, v0];
                 break;
             }
             case 3: {
-
-                this.positions = v0;
-
-                setTimeout(() => {
-                    this.positions = v3;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v4;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v4;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v3;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);  
-                
+                switchSequence = [v0, v3, v4, v7, v7, v4, v3, v0];
                 break;
             }
             case 4: {
-
-                setTimeout(() => {
-                    this.positions = v4;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v4;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v4;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v5;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);                  
-                
+                switchSequence = [v0, v5, v4, v7, v7, v4, v5, v0];
                 break;
             }
             case 5: {
-
-
-                setTimeout(() => {
-                    this.positions = v5;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v6;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v6;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v5;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);                  
-                
+                switchSequence = [v0, v5, v6, v7, v7, v6, v5, v0];
+                break;
+            }            
+            case 6: {
+                switchSequence = [v0, v1, v6, v7, v7, v6, v1, v0];
                 break;
             }
-            case 6: {
-
-                setTimeout(() => {
-                    this.positions = v1;
-                }, t_first);
-
-                setTimeout(() => {
-                    this.positions = v6;
-                }, t_second);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_third);
-
-                setTimeout(() => {
-                    this.positions = v7;
-                }, t_fourth);      
-
-                setTimeout(() => {
-                    this.positions = v6;
-                }, t_fifth);         
-
-                setTimeout(() => {
-                    this.positions = v1;
-                }, t_sixth);  
-
-                setTimeout(() => {
-                    this.positions = v0;
-                }, t_seventh);                  
-                
-                break;
-            }                                                            
-
         }
 
+        for ( i = 0; i < 8; ++i ) {
+            switch (switchSequence[i]) {
+                case v0: {
+                    voltageSequence_ab[i] = 0;
+                    voltageSequence_bc[i] = 0;
+                    voltageSequence_ca[i] = 0;
+                    break;
+                }
+                case v1: {
+                    voltageSequence_ab[i] = Udc;
+                    voltageSequence_bc[i] = 0;
+                    voltageSequence_ca[i] = -Udc;
+                    break;
+                }
+                case v2: {
+                    voltageSequence_ab[i] = 0;
+                    voltageSequence_bc[i] = Udc;
+                    voltageSequence_ca[i] = -Udc;                    
+                    break;
+                }
+                case v3: {
+                    voltageSequence_ab[i] = -Udc;
+                    voltageSequence_bc[i] = Udc;
+                    voltageSequence_ca[i] = 0;                        
+                    break;
+                }
+                case v4: {
+                    voltageSequence_ab[i] = -Udc;
+                    voltageSequence_bc[i] = 0;
+                    voltageSequence_ca[i] = Udc;    
+                    break;
+                }            
+                case v5: {
+                    voltageSequence_ab[i] = 0;
+                    voltageSequence_bc[i] = -Udc;
+                    voltageSequence_ca[i] = Udc;                        
+                    break;
+                }
+                case v6: {
+                    voltageSequence_ab[i] = Udc;
+                    voltageSequence_bc[i] = -Udc;
+                    voltageSequence_ca[i] = 0;                       
+                    break;
+                }
+                case v7: {
+                    voltageSequence_ab[i] = 0;
+                    voltageSequence_bc[i] = 0;
+                    voltageSequence_ca[i] = 0;                    
+                    break;
+                }                                
+            }
+            
+        }
 
-        console.log("switch sequence complete!")
+        // Calculate indexes for the graph values and draw the graph
+        var stepsInGraph = 100;
+        var firstStep = Math.floor(t_first/fullPeriod*stepsInGraph);
+        var secondStep = Math.floor(t_second/fullPeriod*stepsInGraph);
+        var thirdStep = Math.floor(t_third/fullPeriod*stepsInGraph);
+        var fourthStep = Math.floor(t_fourth/fullPeriod*stepsInGraph);
+        var fifthStep = Math.floor(t_fifth/fullPeriod*stepsInGraph);
+        var sixthStep = Math.floor(t_sixth/fullPeriod*stepsInGraph);
+        var seventhStep = Math.floor(t_seventh/fullPeriod*stepsInGraph);
+        var i_graph = 0;
+        var voltageGraph_ab = [];
+        var voltageGraph_bc = [];
+        var voltageGraph_ca = [];
+
+        for ( i_graph = 0; i_graph < firstStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[0]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[0]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[0]
+        }
+        for ( i_graph = firstStep; i_graph < secondStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[1]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[1]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[1]            
+        }    
+        for ( i_graph = secondStep; i_graph < thirdStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[2]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[2]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[2]            
+        }            
+        for ( i_graph = thirdStep; i_graph < fourthStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[3]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[3]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[3]            
+        }        
+        for ( i_graph = fourthStep; i_graph < fifthStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[4]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[4]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[4]            
+        }
+        for ( i_graph = fifthStep; i_graph < sixthStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[5]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[5]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[5]            
+        }
+        for ( i_graph = sixthStep; i_graph < seventhStep; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[6]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[6]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[6]            
+        }  
+        for ( i_graph = seventhStep; i_graph < stepsInGraph; ++i_graph ) {
+            voltageGraph_ab[i_graph] = voltageSequence_ab[7]
+            voltageGraph_bc[i_graph] = voltageSequence_bc[7]
+            voltageGraph_ca[i_graph] = voltageSequence_ca[7]            
+        }                    
+
+        // Switch sequence
+
+        this.positions = switchSequence[0];
+
+        setTimeout(() => {
+            this.positions = switchSequence[1];
+        }, t_first);
+
+        setTimeout(() => {
+            this.positions = switchSequence[2];
+        }, t_second);
+
+        setTimeout(() => {
+            this.positions = switchSequence[3];
+
+        }, t_third);
+
+        setTimeout(() => {
+            this.positions = switchSequence[4];    
+        }, t_fourth);      
+
+        setTimeout(() => {
+            this.positions = switchSequence[5];
+        }, t_fifth);         
+
+        setTimeout(() => {
+            this.positions = switchSequence[6];      
+        }, t_sixth);  
+
+        setTimeout(() => {
+            this.positions = switchSequence[7];                         
+        }, t_seventh);  
+
+        this.signal = [ voltageGraph_ab, voltageGraph_bc, voltageGraph_ca ];
 
     },
       
@@ -502,6 +487,13 @@ export default {
 }
 .TwoLevelBridge {
     margin-left: 800px;
+}
+
+#wf {
+    margin-left: 800px;
+    margin-top: 0px;
+    max-height: 200px;
+    max-width: 450px;
 }
 
 </style>

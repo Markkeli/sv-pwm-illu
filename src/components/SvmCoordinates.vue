@@ -174,7 +174,7 @@ export default {
             mouseClickTimeout = true;
             setTimeout(function() {
                 mouseClickTimeout = false;
-            }, 500);
+            }, 2000);
 
             var rect = this.c.getBoundingClientRect();
             this.mouse = {
