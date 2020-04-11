@@ -1,12 +1,21 @@
 <template>
-  <div class="SvmCoordinates">
-      <canvas width="600" height="600" id="svmgraph" @mousemove="handleMouseMove" @click="handleMouseClick"></canvas>
-      <p id>V_alpha: {{ v_alpha }}</p>
-      <p id>V_beta: {{ v_beta }}</p>
-      <p id>sector: {{ svm_sector }}</p>
-      <p id>reference vector length: {{ ref_length }}</p>
-      <p id>theta: {{ theta }}</p>
-  </div>
+    <div class="SvmCoordinates">
+        <div class="svmCanvas">
+            <canvas :width="size*2" :height="size*2" id="svmgraph" @mousemove="handleMouseMove" @click="handleMouseClick"></canvas>
+        </div>
+
+        <div class="svmTexts">
+            <p id>Va: {{ v_a }}</p>
+            <p id>Vb: {{ v_b }}</p>
+            <p id>Vc: {{ v_c }}</p>            
+            <p id>V_alpha: {{ v_alpha }}</p>
+            <p id>V_beta: {{ v_beta }}</p>
+            <p id>sector: {{ svm_sector }}</p>
+            <p id>reference vector length: {{ ref_length }}</p>
+            <p id>theta: {{ theta }}</p>
+        </div>
+    </div>
+
 </template>
 
 <script>
@@ -14,6 +23,9 @@ var mouseClickTimeout = false;
 
 export default {
   name: 'SvmCoordinates',
+  props: {
+      freq: Number
+  },
   data: function() { 
     return {
       mouse: {
@@ -22,16 +34,19 @@ export default {
       },
       v_alpha: 0,
       v_beta: 0,
+      v_a: 0,
+      v_b: 0,
+      v_c: 0,
       svm_sector: 0,
       ref_length: 0,
-      theta: 0
+      theta: 0,
+      size: 200
     };
   },
 
   mounted() { 
       this.c = document.getElementById("svmgraph");
       this.ctx = this.c.getContext("2d");
-      this.size = 300;
       
       this.drawBackground();
 
@@ -147,6 +162,12 @@ export default {
           
           this.v_alpha = v_alpha;
           this.v_beta = v_beta;
+
+          this.v_a = v_alpha;
+          this.v_b = -0.5*v_alpha + Math.sqrt(3)/2*v_beta;
+          this.v_c = -0.5*v_alpha - Math.sqrt(3)/2*v_beta;
+          this.$emit('momentaryVoltages', [this.v_a, this.v_b, this.v_c]);
+
           this.svm_sector = sector;
           this.ref_length = Math.sqrt(v_alpha*v_alpha + v_beta*v_beta);
           var theta_temp = Math.atan2(this.v_beta, this.v_alpha);
@@ -174,7 +195,7 @@ export default {
             mouseClickTimeout = true;
             setTimeout(function() {
                 mouseClickTimeout = false;
-            }, 2000);
+            }, 1/this.freq*1000);
 
             var rect = this.c.getBoundingClientRect();
             this.mouse = {
@@ -235,21 +256,15 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+.svmCanvas {
+    display: inline-block;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+.svmTexts {
+    display: inline-block;
+    position: relative;
+    margin-left: 30px;
+    top: -120px;
 }
 
 </style>

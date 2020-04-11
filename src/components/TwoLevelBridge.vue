@@ -114,7 +114,8 @@
     export default {
         name: "TwoLevelBridge",
         props: {
-            switchPositions: Array
+            switchPositions: Array,
+            freq: Number
         },
         data: function() { 
             return {

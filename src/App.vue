@@ -1,8 +1,12 @@
 <template>
         <div id="app">
-            <SvmCoordinates v-on:triggerModulation="modulate" />
-            <TwoLevelBridge v-bind:switchPositions="positions" />
-            <Waveform v-bind:newSignal="signal" id="wf" />
+            <SvmCoordinates v-on:triggerModulation="modulate" v-on:momentaryVoltages="updateVoltages" v-bind:freq="switchingFrequency" />
+            <TwoLevelBridge v-bind:switchPositions="positions" v-bind:freq="switchingFrequency" />
+            <Waveform v-bind:newSignal="voltageSignal" v-bind:voltages="momentaryVoltages" id="wf" />
+            <div id="inputGUI">
+                <p id="frequencyText">Switching frequency</p>
+                <input v-model="switchingFrequency" type="range" min="0.1" max="5" value="1" class="slider" id="frequencyRange">
+            </div>
 
         </div>
 </template>
@@ -13,6 +17,7 @@ import SvmCoordinates from './components/SvmCoordinates.vue'
 import TwoLevelBridge from './components/TwoLevelBridge.vue'
 import Waveform from './components/Waveform.vue'
 
+
 export default {
   name: 'App',
   components: {
@@ -21,25 +26,28 @@ export default {
     Waveform
   },
   data() { 
-    return {
-      positions: [0,0,0,0,0,0],
-      signal: [[], [], []]
-    }
+        return {
+            positions: [0,0,0,0,0,0],
+            momentaryVoltages:[0, 0, 0],
+            voltageSignal: [[], [], []],
+            currentSignal: [[], [], []],
+            switchingFrequency: 1,  // in Hz
+            Udc: 1
+        }
   },
   mounted() {
-    for (var i = 0; i < 100; ++i) {
-            this.signal[0][i] = 0;
-            this.signal[1][i] = 0;
-            this.signal[2][i] = 0;        
-    }
+
   },
   methods: {
     
+    updateVoltages(voltages) {
+        this.momentaryVoltages = voltages;
+    },
+
     modulate(voltageReference) {
         // Switch vectors
         // Order: S1, S2, S3, S4, S5, S6
         // where switches 1-2 are part of A-phase leg etc.
-        var Udc = 80;
 
         var v0 = [1,0,1,0,1,0];
         var v1 = [0,1,1,0,1,0];
@@ -63,12 +71,12 @@ export default {
         var t_seventh = 0;        
         var one_by_sqrt3 = 1/Math.sqrt(3);
         var two_by_sqrt3 = 2/Math.sqrt(3);
-        var fullPeriod = 2000; // ms
+        var fullPeriod = 1/this.switchingFrequency*1000; // ms
         var halfPeriod = 0.5 * fullPeriod;
         
-        // Signal data init
+        // voltageSignal data init
         for (var i = 0; i < 100; ++i) {
-            this.signal[i] = 0;
+            this.voltageSignal[i] = 0;
         }
 
         // Switch timings
@@ -246,6 +254,9 @@ export default {
         var voltageSequence_ab = [];
         var voltageSequence_bc = [];
         var voltageSequence_ca = [];
+        var voltageSequence_an = [];
+        var voltageSequence_bn = [];
+        var voltageSequence_cn = [];        
 
 
         switch (sector) {
@@ -281,48 +292,73 @@ export default {
                     voltageSequence_ab[i] = 0;
                     voltageSequence_bc[i] = 0;
                     voltageSequence_ca[i] = 0;
+                    voltageSequence_an[i] = 0;
+                    voltageSequence_bn[i] = 0;
+                    voltageSequence_cn[i] = 0;
+
                     break;
                 }
                 case v1: {
-                    voltageSequence_ab[i] = Udc;
+                    voltageSequence_ab[i] = this.Udc;
                     voltageSequence_bc[i] = 0;
-                    voltageSequence_ca[i] = -Udc;
+                    voltageSequence_ca[i] = -this.Udc;
+                    voltageSequence_an[i] = 2/3*this.Udc;
+                    voltageSequence_bn[i] = -1/3*this.Udc;
+                    voltageSequence_cn[i] = -1/3*this.Udc;
                     break;
                 }
                 case v2: {
                     voltageSequence_ab[i] = 0;
-                    voltageSequence_bc[i] = Udc;
-                    voltageSequence_ca[i] = -Udc;                    
+                    voltageSequence_bc[i] = this.Udc;
+                    voltageSequence_ca[i] = -this.Udc;
+                    voltageSequence_an[i] = 1/3*this.Udc;
+                    voltageSequence_bn[i] = 1/3*this.Udc;
+                    voltageSequence_cn[i] = -2/3*this.Udc;                                        
                     break;
                 }
                 case v3: {
-                    voltageSequence_ab[i] = -Udc;
-                    voltageSequence_bc[i] = Udc;
-                    voltageSequence_ca[i] = 0;                        
+                    voltageSequence_ab[i] = -this.Udc;
+                    voltageSequence_bc[i] = this.Udc;
+                    voltageSequence_ca[i] = 0;            
+                    voltageSequence_an[i] = -1/3*this.Udc;
+                    voltageSequence_bn[i] = 2/3*this.Udc;
+                    voltageSequence_cn[i] = -1/3*this.Udc;                                       
                     break;
                 }
                 case v4: {
-                    voltageSequence_ab[i] = -Udc;
+                    voltageSequence_ab[i] = -this.Udc;
                     voltageSequence_bc[i] = 0;
-                    voltageSequence_ca[i] = Udc;    
+                    voltageSequence_ca[i] = this.Udc;
+                    voltageSequence_an[i] = -2/3*this.Udc;
+                    voltageSequence_bn[i] = 1/3*this.Udc;
+                    voltageSequence_cn[i] = 1/3*this.Udc;                          
                     break;
                 }            
                 case v5: {
                     voltageSequence_ab[i] = 0;
-                    voltageSequence_bc[i] = -Udc;
-                    voltageSequence_ca[i] = Udc;                        
+                    voltageSequence_bc[i] = -this.Udc;
+                    voltageSequence_ca[i] = this.Udc;      
+                    voltageSequence_an[i] = -1/3*this.Udc;
+                    voltageSequence_bn[i] = -1/3*this.Udc;
+                    voltageSequence_cn[i] = 2/3*this.Udc;                                        
                     break;
                 }
                 case v6: {
-                    voltageSequence_ab[i] = Udc;
-                    voltageSequence_bc[i] = -Udc;
-                    voltageSequence_ca[i] = 0;                       
+                    voltageSequence_ab[i] = this.Udc;
+                    voltageSequence_bc[i] = -this.Udc;
+                    voltageSequence_ca[i] = 0;          
+                    voltageSequence_an[i] = 1/3*this.Udc;
+                    voltageSequence_bn[i] = -2/3*this.Udc;
+                    voltageSequence_cn[i] = 1/3*this.Udc;                                             
                     break;
                 }
                 case v7: {
                     voltageSequence_ab[i] = 0;
                     voltageSequence_bc[i] = 0;
-                    voltageSequence_ca[i] = 0;                    
+                    voltageSequence_ca[i] = 0;         
+                    voltageSequence_an[i] = 0;
+                    voltageSequence_bn[i] = 0;
+                    voltageSequence_cn[i] = 0;                               
                     break;
                 }                                
             }
@@ -342,46 +378,73 @@ export default {
         var voltageGraph_ab = [];
         var voltageGraph_bc = [];
         var voltageGraph_ca = [];
+        var voltageGraph_an = [];
+        var voltageGraph_bn = [];
+        var voltageGraph_cn = [];                   
 
         for ( i_graph = 0; i_graph < firstStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[0]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[0]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[0]
+            voltageGraph_ab[i_graph] = voltageSequence_ab[0].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[0].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[0].toFixed(1);
+            voltageGraph_an[i_graph] = voltageSequence_an[0].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[0].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[0].toFixed(1);            
         }
         for ( i_graph = firstStep; i_graph < secondStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[1]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[1]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[1]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[1].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[1].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[1].toFixed(1);       
+            voltageGraph_an[i_graph] = voltageSequence_an[1].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[1].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[1].toFixed(1);                   
         }    
         for ( i_graph = secondStep; i_graph < thirdStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[2]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[2]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[2]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[2].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[2].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[2].toFixed(1);  
+            voltageGraph_an[i_graph] = voltageSequence_an[2].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[2].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[2].toFixed(1);                        
         }            
         for ( i_graph = thirdStep; i_graph < fourthStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[3]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[3]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[3]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[3].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[3].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[3].toFixed(1);
+            voltageGraph_an[i_graph] = voltageSequence_an[3].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[3].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[3].toFixed(1);                          
         }        
         for ( i_graph = fourthStep; i_graph < fifthStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[4]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[4]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[4]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[4].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[4].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[4].toFixed(1);
+            voltageGraph_an[i_graph] = voltageSequence_an[4].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[4].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[4].toFixed(1);                          
         }
         for ( i_graph = fifthStep; i_graph < sixthStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[5]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[5]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[5]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[5].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[5].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[5].toFixed(1); 
+            voltageGraph_an[i_graph] = voltageSequence_an[5].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[5].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[5].toFixed(1);                         
         }
         for ( i_graph = sixthStep; i_graph < seventhStep; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[6]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[6]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[6]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[6].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[6].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[6].toFixed(1); 
+            voltageGraph_an[i_graph] = voltageSequence_an[6].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[6].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[6].toFixed(1);                         
         }  
         for ( i_graph = seventhStep; i_graph < stepsInGraph; ++i_graph ) {
-            voltageGraph_ab[i_graph] = voltageSequence_ab[7]
-            voltageGraph_bc[i_graph] = voltageSequence_bc[7]
-            voltageGraph_ca[i_graph] = voltageSequence_ca[7]            
+            voltageGraph_ab[i_graph] = voltageSequence_ab[7].toFixed(1);
+            voltageGraph_bc[i_graph] = voltageSequence_bc[7].toFixed(1);
+            voltageGraph_ca[i_graph] = voltageSequence_ca[7].toFixed(1);   
+            voltageGraph_an[i_graph] = voltageSequence_an[7].toFixed(1);
+            voltageGraph_bn[i_graph] = voltageSequence_bn[7].toFixed(1);
+            voltageGraph_cn[i_graph] = voltageSequence_cn[7].toFixed(1);                        
         }                    
 
         // Switch sequence
@@ -398,7 +461,6 @@ export default {
 
         setTimeout(() => {
             this.positions = switchSequence[3];
-
         }, t_third);
 
         setTimeout(() => {
@@ -414,10 +476,11 @@ export default {
         }, t_sixth);  
 
         setTimeout(() => {
-            this.positions = switchSequence[7];                         
+            this.positions = switchSequence[7];      
         }, t_seventh);  
 
-        this.signal = [ voltageGraph_ab, voltageGraph_bc, voltageGraph_ca ];
+
+        this.voltageSignal = [ voltageGraph_ab, voltageGraph_bc, voltageGraph_ca, voltageGraph_an, voltageGraph_bn, voltageGraph_cn ];
 
     },
       
@@ -474,26 +537,54 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: left;
-  color: #2c3e50;
+  color: #2c3e50;   
   margin-top: 60px;
   
 }
 
 .SvmCoordinates {
-    float: left;
-    width: 100px;
-    height: 20px;
-    margin-right: 8px;
+    display:inline-block;
+    margin-left: 20px;
 }
 .TwoLevelBridge {
-    margin-left: 800px;
+    float:left;
 }
 
-#wf {
-    margin-left: 800px;
-    margin-top: 0px;
-    max-height: 200px;
-    max-width: 450px;
+.slider {
+  -webkit-appearance: none;
+  width: 200px;
+  height: 15px;
+  border-radius: 5px;  
+  background: #4AFF5f;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
 }
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%; 
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+#inputGUI {
+    position: absolute;
+    top: 500px;
+    right: 400px;
+}
+
 
 </style>
