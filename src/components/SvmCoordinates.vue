@@ -5,14 +5,14 @@
         </div>
 
         <div class="svmTexts">
-            <p id>Va: {{ v_a }}</p>
-            <p id>Vb: {{ v_b }}</p>
-            <p id>Vc: {{ v_c }}</p>            
-            <p id>V_alpha: {{ v_alpha }}</p>
-            <p id>V_beta: {{ v_beta }}</p>
+            <p id>Va: {{ v_a.toFixed(0) }}</p>
+            <p id>Vb: {{ v_b.toFixed(0) }}</p>
+            <p id>Vc: {{ v_c.toFixed(0) }}</p>            
+            <p id>V_alpha: {{ v_alpha.toFixed(0) }}</p>
+            <p id>V_beta: {{ v_beta.toFixed(0) }}</p>
             <p id>sector: {{ svm_sector }}</p>
-            <p id>reference vector length: {{ ref_length }}</p>
-            <p id>theta: {{ theta }}</p>
+            <p id>reference vector length: {{ ref_length.toFixed(2) }}</p>
+            <p id>theta: {{ theta.toFixed(2) }}</p>
         </div>
     </div>
 
@@ -24,7 +24,10 @@ var mouseClickTimeout = false;
 export default {
   name: 'SvmCoordinates',
   props: {
-      freq: Number
+      freq: Number,
+      opmode: Boolean,
+      autostep: Number,
+      refAmplitude: Number
   },
   data: function() { 
     return {
@@ -40,7 +43,9 @@ export default {
       svm_sector: 0,
       ref_length: 0,
       theta: 0,
-      size: 200
+      size: 200,
+      automodulator: null,
+      runningTheta: 0
     };
   },
 
@@ -50,6 +55,14 @@ export default {
       
       this.drawBackground();
 
+  },
+  watch: {
+    opmode: {
+        handler: function() {
+            this.autoModulation();
+        },
+        deep: true
+    }
   },
 
   methods: {
@@ -176,22 +189,51 @@ export default {
 
       },
       handleMouseMove: function (event) {
-          //console.log(this.mouseClickTimeout);
+        if (! this.opmode ) {
+            
+            if (! mouseClickTimeout ) {
+                var rect = this.c.getBoundingClientRect();
+                this.mouse = {
+                    x: event.pageX - rect.left,
+                    y: event.pageY - rect.top
+                }
 
-          if (! mouseClickTimeout ) {
-            var rect = this.c.getBoundingClientRect();
-            this.mouse = {
-                x: event.pageX - rect.left,
-                y: event.pageY - rect.top
+                this.updateSpaceVectorData(this.mouse.x - this.size, this.size - this.mouse.y);
+                this.drawVectors(this.mouse.x, this.mouse.y);
             }
+        }
 
-            this.updateSpaceVectorData(this.mouse.x - this.size, this.size - this.mouse.y);
-            this.drawVectors(this.mouse.x, this.mouse.y);
-          }
+      },
+      autoModulation: function () {
+        if ( this.opmode ) {
+
+            this.automodulator = setInterval(() =>  {
+                var v_alpha_generated = this.refAmplitude*Math.cos(this.runningTheta);
+                var v_beta_generated = this.refAmplitude*Math.sin(this.runningTheta);
+
+                this.updateSpaceVectorData(v_alpha_generated, v_beta_generated);
+                this.drawVectors(v_alpha_generated+this.size, -v_beta_generated+this.size);
+                this.$emit('triggerModulation', [this.v_alpha/this.size, this.v_beta/this.size]); // normalization
+
+
+                this.runningTheta += 0.1*Math.PI;
+
+                if (this.runningTheta > 2*Math.Pi ) {
+                    this.runningTheta = 0;
+                }
+                
+            }, () => {
+                if (this.autostep < 1/this.freq*1000) return this.autostep;
+                else return 1/this.freq*1000;})
+        }
+        else {
+            clearInterval(this.automodulator);
+        }
+
       },
 
     handleMouseClick: function (event) {
-        if (! mouseClickTimeout ) {
+        if ((! mouseClickTimeout) && (! this.opmode) ) {
             mouseClickTimeout = true;
             setTimeout(function() {
                 mouseClickTimeout = false;
@@ -205,8 +247,7 @@ export default {
 
             this.updateSpaceVectorData(this.mouse.x - this.size, this.size - this.mouse.y);
             this.drawVectors(this.mouse.x, this.mouse.y);
-            // normalization
-            this.$emit('triggerModulation', [this.v_alpha/this.size, this.v_beta/this.size]);
+            this.$emit('triggerModulation', [this.v_alpha/this.size, this.v_beta/this.size]); // normalization
         }
       },
 

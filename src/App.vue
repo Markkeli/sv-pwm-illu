@@ -1,11 +1,23 @@
 <template>
         <div id="app">
-            <SvmCoordinates v-on:triggerModulation="modulate" v-on:momentaryVoltages="updateVoltages" v-bind:freq="switchingFrequency" />
-            <TwoLevelBridge v-bind:switchPositions="positions" v-bind:freq="switchingFrequency" />
+            <SvmCoordinates v-on:triggerModulation="modulate" v-on:momentaryVoltages="updateVoltages"
+                            v-bind:freq="Number(switchingFrequency)" v-bind:opmode="Boolean(mode)" v-bind:autostep="Number(autoStepTime)" 
+                            v-bind:refAmplitude="Number(amplitude)" />
+            <TwoLevelBridge v-bind:switchPositions="positions" v-bind:freq="Number(switchingFrequency)" />
             <Waveform v-bind:newSignal="voltageSignal" v-bind:voltages="momentaryVoltages" id="wf" />
             <div id="inputGUI">
-                <p id="frequencyText">Switching frequency</p>
+                <p>Switching frequency</p>
                 <input v-model="switchingFrequency" type="range" min="0.1" max="5" value="1" class="slider" id="frequencyRange">
+                <p id="modeToggle">Toggle automatic modulation</p>
+                <label class="switch">
+                    <input type="checkbox" v-model="mode" />>
+                    <span class="toggleslider"></span>
+                </label>
+                <p>Step time in auto mode</p>
+                <input v-model="autoStepTime" type="range" min="100" max="2000" value="500" class="slider" id="autoStepTimeRange">
+                <p>Reference amplitude</p>
+                <input v-model="amplitude" type="range" min="1" max="174" value="100" class="slider" id="refamp">
+
             </div>
 
         </div>
@@ -32,7 +44,10 @@ export default {
             voltageSignal: [[], [], []],
             currentSignal: [[], [], []],
             switchingFrequency: 1,  // in Hz
-            Udc: 1
+            Udc: 1,
+            mode: 0,
+            autoStepTime: 500,
+            amplitude: 1
         }
   },
   mounted() {
@@ -551,6 +566,7 @@ export default {
 }
 
 .slider {
+  display: block;
   -webkit-appearance: none;
   width: 200px;
   height: 15px;
@@ -558,8 +574,8 @@ export default {
   background: #4AFF5f;
   outline: none;
   opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
+  -webkit-transition: .1s;
+  transition: opacity .1s;
 }
 
 .slider::-webkit-slider-thumb {
@@ -586,5 +602,67 @@ export default {
     right: 400px;
 }
 
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+
+/* The slider */
+.toggleslider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.toggleslider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #4CAF50;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .toggleslider {
+  background-color: #4AFF5f;
+}
+
+input:focus + .toggleslider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .toggleslider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+.toggleslider {
+  border-radius: 34px;
+}
+
+.toggleslider:before {
+  border-radius: 50%;
+}
 
 </style>
