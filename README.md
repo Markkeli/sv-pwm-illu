@@ -9,6 +9,9 @@ I created this application to help illustrate how space vector pulse-width modul
 The interactive &alpha;&beta;-coordinate canvas should help in illustrating how the reference vector is projected to the switch vectors, and how that created a specific switch sequence. The reference three-phase voltages are updated in a graph interactively as you move the cursor in the coordinate canvas. All switch sequences are also drawn as AC-side voltage outputs.
 </p>
 <p>
+The space vector modulation is implemented for a two level inverter power-stage with six switches.
+</p>
+<p>
 Try it out! You can find a deployed version of the application here: https://ovaskainen.fi/sv-pwm-illu/
 </p>
 <h3>Created with Vue.js and HTML5.</h3>
