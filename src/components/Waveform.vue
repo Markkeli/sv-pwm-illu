@@ -1,8 +1,13 @@
 <template>
     <div class="Waveform">
-        <apexchart width="600" height="200" type="line" :options="chartOptions" :series="series" id="chart1"></apexchart>
-        <apexchart width="600" height="200"  type="line" :options="chartOptions2" :series="series2" id="chart2"></apexchart>
-        <apexchart width="600" height="200"  type="line" :options="chartOptions3" :series="series3" id="chart3"></apexchart>
+        <div>
+            <apexchart width="400" height="200"  type="line" :options="chartOptions3" :series="series3" id="chart3"></apexchart>
+        </div>
+        <div class="charts">
+            <apexchart width="400" height="200" type="line" :options="chartOptions" :series="series"></apexchart>
+            <apexchart width="400" height="200"  type="line" :options="chartOptions2" :series="series2"></apexchart>
+        </div>
+
     </div>
 </template>
 
@@ -33,7 +38,8 @@
                             },
                             zoom: {
                                 enabled: true
-                            }
+                            },
+                            fontFamily: 'Segoe UI'
                             
                         },
                         dataLabels: {
@@ -45,7 +51,7 @@
                         },
                         title: {
                             text: 'Inverter voltages of one switching period',
-                            align: 'left'
+                            align: 'center'
                         },
                         xaxis: {
                             type: 'numeric',
@@ -96,7 +102,8 @@
                             },
                             zoom: {
                                 enabled: false
-                            }
+                            },
+                            fontFamily: 'Segoe UI'
                             
                         },
                         dataLabels: {
@@ -161,7 +168,8 @@
                             },
                             zoom: {
                                 enabled: false
-                            }
+                            },
+                            fontFamily: 'Segoe UI'
                             
                         },
                         dataLabels: {
@@ -174,7 +182,7 @@
                         title: {
 
                             text: 'Real time updating reference voltages',
-                            align: 'left'
+                            align: 'center'
                         },
                         xaxis: {
                             type: 'numeric',
@@ -294,14 +302,14 @@
 </script>
 <style scoped>
 
-#chart1 {
+.charts {
     display: inline-block;
+    position: static;
+
 }
 
 #chart3 {
-    position: relative;
-    top: -430px;
-    right: -600px;
+    float: left;
 }
 
 

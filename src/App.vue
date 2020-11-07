@@ -3,22 +3,31 @@
             <SvmCoordinates v-on:triggerModulation="modulate" v-on:momentaryVoltages="updateVoltages"
                             v-bind:freq="Number(switchingFrequency)" v-bind:opmode="Boolean(mode)" v-bind:autostep="Number(autoStepTime)" 
                             v-bind:refAmplitude="Number(amplitude)" />
-            <TwoLevelBridge v-bind:switchPositions="positions" v-bind:freq="Number(switchingFrequency)" />
-            <Waveform v-bind:newSignal="voltageSignal" v-bind:voltages="momentaryVoltages" id="wf" />
-            <div id="inputGUI">
+            <span id=inputGui>
+                <p id="inputGuiTitle">Controls</p>
                 <p>Switching frequency</p>
-                <input v-model="switchingFrequency" type="range" min="0.1" max="5" value="1" class="slider" id="frequencyRange">
-                <p id="modeToggle">Toggle automatic modulation</p>
+                <input v-model="switchingFrequency" type="range" min="0.1" step="0.1" max="5.0" value="1" class="slider" id="frequencyRange">
+                <p id="modeToggle">Toggle auto mode</p>
                 <label class="switch">
                     <input type="checkbox" v-model="mode" />>
                     <span class="toggleslider"></span>
                 </label>
                 <p>Step time in auto mode</p>
-                <input v-model="autoStepTime" type="range" min="100" max="2000" value="500" class="slider" id="autoStepTimeRange">
-                <p>Reference amplitude</p>
-                <input v-model="amplitude" type="range" min="1" max="174" value="100" class="slider" id="refamp">
+                <input v-model="autoStepTime" type="range" min="50" step="1" max="1000" value="500" class="slider" id="autoStepTimeRange">
+                <p>Reference amplitude in auto mode</p>
+                <input v-model="amplitude" type="range" min="1" max="174" step="1" value="100" class="slider" id="refamp">
+            </span>
+            <span id=hints>
+                <p id="hintsTitle">Hints</p>
+                <p>The switching frequency slider changes how fast the switches S1-S6 operate when you click on the coordinates.</p>
+                <p>If you toggle auto mode, the switch matrix will modulate automatically according to a balanced three-phase voltage reference.</p>
+                <p>You can define the step time for the modulation by changing the value of step time slider before toggling the auto mode on.</p>
+            </span>
+            <br />
+            <TwoLevelBridge v-bind:switchPositions="positions" v-bind:freq="Number(switchingFrequency)" />
+            <Waveform v-bind:newSignal="voltageSignal" v-bind:voltages="momentaryVoltages" id="wf" />
+            
 
-            </div>
 
         </div>
 </template>
@@ -47,7 +56,7 @@ export default {
             Udc: 1,
             mode: 0,
             autoStepTime: 500,
-            amplitude: 1
+            amplitude: 100
         }
   },
   mounted() {
@@ -60,18 +69,19 @@ export default {
     },
 
     modulate(voltageReference) {
+
         // Switch vectors
         // Order: S1, S2, S3, S4, S5, S6
         // where switches 1-2 are part of A-phase leg etc.
 
-        var v0 = [1,0,1,0,1,0];
+        var v0 = [1,0,1,0,1,0]; // Zero reference vector
         var v1 = [0,1,1,0,1,0];
         var v2 = [0,1,0,1,1,0];
         var v3 = [1,0,0,1,1,0];
         var v4 = [1,0,0,1,0,1];
         var v5 = [1,0,1,0,0,1];
         var v6 = [0,1,1,0,0,1];
-        var v7 = [0,1,0,1,0,1];
+        var v7 = [0,1,0,1,0,1]; // Zero reference vector
 
         var v_alpha = voltageReference[0];
         var v_beta = voltageReference[1];
@@ -548,25 +558,68 @@ export default {
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: left;
   color: #2c3e50;   
-  margin-top: 60px;
-  
+
+}
+
+#wf {
+    display: inline-block;
+    padding: 5px;
+    width: 800px;
+}
+
+#inputGui {
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    left: 100px;
+    bottom: 70px;
+    margin-top: 70px;
+    width: 300px;
+}
+
+#hints {
+    display: inline-block;
+    position: relative;
+    text-align: justified;
+    left: 120px;
+    bottom: 120px;
+    margin-top: 70px;
+    width: 300px;
 }
 
 .SvmCoordinates {
-    display:inline-block;
+    display: inline-block;
+    text-align: left;
     margin-left: 20px;
+    padding: 5px;
+    width: 700px;
+    height: 450px;
+
 }
 .TwoLevelBridge {
-    float:left;
+    display: inline-block;
+    margin-left: 20px;
+    padding: 5px;
+    width: 800px;
+}
+
+#inputGuiTitle {
+    font-weight: 700;
+    font-size: 120%;
+}
+
+#hintsTitle {
+    font-weight: 500;
+    font-size: 110%;
+    text-align: center;
 }
 
 .slider {
-  display: block;
   -webkit-appearance: none;
   width: 200px;
   height: 15px;
@@ -596,11 +649,6 @@ export default {
   cursor: pointer;
 }
 
-#inputGUI {
-    position: absolute;
-    top: 500px;
-    right: 400px;
-}
 
 /* The switch - the box around the slider */
 .switch {
@@ -620,6 +668,7 @@ export default {
 
 /* The slider */
 .toggleslider {
+  display: inline-block;
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -632,6 +681,7 @@ export default {
 }
 
 .toggleslider:before {
+  display: inline-block;
   position: absolute;
   content: "";
   height: 26px;
