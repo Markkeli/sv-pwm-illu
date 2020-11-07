@@ -11,7 +11,7 @@ The interactive &alpha;&beta;-coordinate canvas should help in illustrating how 
 <p>
 Try it out! You can find a deployed version of the application here: https://ovaskainen.fi/sv-pwm-illu/
 </p>
-<h3>Created with Vue.js nad HTML5.</h3>
+<h3>Created with Vue.js and HTML5.</h3>
 
 </html>
 
